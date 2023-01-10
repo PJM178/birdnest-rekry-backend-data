@@ -1,8 +1,8 @@
 import axios from 'axios';
 const baseUrl = '/api/pilots';
 
-const getPilot = async (serialNumber) => {
-  const response = await axios.post(baseUrl, { serialNumber: serialNumber });
+const getPilot = async () => {
+  const response = await axios.get(baseUrl);
 
   return response.data;
 };

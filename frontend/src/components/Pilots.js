@@ -1,9 +1,8 @@
 import { useState } from 'react';
 
-import TimerTest from './TimerTest';
 import InfoModal from './InfoModal';
 
-const Pilots = ({ violations }) => {
+const Pilots = ({ violations, uptime }) => {
   const [modal, setModal] = useState(false);
   const [pilot, setPilot] = useState([]);
 
@@ -49,7 +48,7 @@ const Pilots = ({ violations }) => {
 
   return (
     <div>
-      <h3 style={{ marginBottom: '5px' }}>Violating persons in the last 10 minutes - elapsed time: {<TimerTest />} seconds</h3>
+      <h3 style={{ marginBottom: '5px' }}>Violating persons in the last 10 minutes - server uptime: {uptime} seconds</h3>
       <div>
         {violations.map((item, i) =>
           item.time + 600000 >= Date.now()

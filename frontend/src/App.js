@@ -1,5 +1,5 @@
-import droneService from './services/drones';
 import pilotService from './services/pilots';
+import droneService from './services/drones';
 import { useState, useEffect } from 'react';
 
 import Drones from './components/Drones';
@@ -10,50 +10,32 @@ const App = () => {
   const [drones, setDrones] = useState([]);
   const [timer, setTimer] = useState(1);
   const [violations, setViolations] = useState([]);
+  const [uptime, setUptime] = useState(null);
 
   const timeout = () => {
     setTimeout(() => {
-      console.log('tik-tok', timer);
       setTimer(timer+1);
-    }, 5000);
-  };
-
-  const findPilot = async (drone, distance) => {
-    const pilotCheck = violations.find(item => item.drone.serialNumber === drone.serialNumber);
-    if (pilotCheck === undefined) {
-      const pilot = await pilotService.getPilot(drone.serialNumber);
-      console.log('pilot not in array:', pilot.firstName, distance);
-      setViolations(violations => [...violations, {
-        pilot: pilot,
-        drone: drone,
-        distance: distance,
-        time: Date.now()
-      }]);
-    } else {
-      console.log('pilot in array:', pilotCheck.pilot.firstName, distance);
-      const newDistance = pilotCheck.distance <= distance ? pilotCheck.distance : distance;
-      console.log(newDistance);
-      setViolations(violations => violations.map(item => (item.drone.serialNumber === drone.serialNumber ? { ...item, time: Date.now(), distance: newDistance } : item)));
-    }
-  };
-
-  const countViolations = (drones) => {
-    drones.forEach(drone => {
-      const distance = Math.sqrt((250000 - drone.positionX) ** 2 + (250000 - drone.positionY) ** 2)/1000;
-      if (distance < 100) {
-        findPilot(drone, distance);
-      }
-    });
+    }, 1000);
   };
 
   useEffect(() => {
+    // call the api to start polling on refresh
+    droneService.startPolling();
+  }, []);
+
+  useEffect(() => {
     const getDrones = async () => {
-      const drones = await droneService.getAllDrones();
-      setDrones(drones.report.capture.drone);
-      countViolations(drones.report.capture.drone);
+      // refactored code to keep the data on server so the route is slightly confusing
+      const drones = await pilotService.getPilot();
+      setDrones(drones.drones);
+      setViolations(drones.violations);
+      setUptime(Math.floor(Math.abs(drones.timer - Date.now())/1000));
     };
     getDrones();
     timeout();
+    return () => {
+      clearTimeout(timeout);
+    };
   }, [timer]);
 
 
@@ -67,7 +49,7 @@ const App = () => {
             <div><Drones drones={drones} /></div>
           </div>
         </div>
-        <Pilots violations={violations} />
+        <Pilots violations={violations} uptime={uptime} />
       </div>
     </div>
   );
